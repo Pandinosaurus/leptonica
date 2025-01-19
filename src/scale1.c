@@ -263,7 +263,7 @@ l_float32  maxscale, sharpfract;
 
         /* Reduce the default sharpening factors by 2 if maxscale < 0.7 */
     maxscale = L_MAX(scalex, scaley);
-    sharpfract = (maxscale < 0.7) ? 0.2 : 0.4;
+    sharpfract = (maxscale < 0.7) ? 0.2f : 0.4f;
     sharpwidth = (maxscale < 0.7) ? 1 : 2;
 
     return pixScaleGeneral(pixs, scalex, scaley, sharpfract, sharpwidth);
@@ -1304,11 +1304,13 @@ cleanup:
  *          subsampling (%scalex and/or %scaley < 1.0).
  *      (2) If %scalex == 1.0 and %scaley == 1.0, returns a copy.
  *      (3) For upscaling by an integer, use pixExpandReplicate().
- *      (4) By default, sampling for source pixels is shifted by 1/2 pixel.
- *          This is equivalent to shifting the output scaled image by
- *          0.5 times the scaling factor to the right and down.  To avoid
- *          this shift, call pixScalebySamplingWithShift() using 0 for
- *          both shifts.
+ *      (4) By default, indexing for the sampled source pixel is done
+ *          by rounding.  This shifts the source pixel sampling down
+ *          and to the right by half a pixel, which has the effect of
+ *          shifting the destination image up and to the left by a
+ *          number of pixels approximately equal to half the scaling
+ *          factor.  To avoid this shift in the destination image,
+ *          call pixScalebySamplingWithShift() using 0 for both shifts.
  * </pre>
  */
 PIX *
@@ -1462,7 +1464,7 @@ l_float32  scale;
         return pixCopy(NULL, pixs);
     }
 
-    scale = 1. / (l_float32)factor;
+    scale = 1.f / (l_float32)factor;
     return pixScaleBySampling(pixs, scale, scale);
 }
 
@@ -1525,7 +1527,7 @@ PIX       *pixd;
         return (PIX *)ERROR_PTR("pixd not made", __func__, NULL);
     pixCopyResolution(pixd, pixs);
     pixCopyInputFormat(pixd, pixs);
-    scale = 1. / (l_float32) factor;
+    scale = 1.f / (l_float32) factor;
     pixScaleResolution(pixd, scale, scale);
     datad = pixGetData(pixd);
     wpld = pixGetWpl(pixd);
@@ -1653,7 +1655,7 @@ PIX       *pixd;
         return (PIX *)ERROR_PTR("pixd not made", __func__, NULL);
     pixCopyResolution(pixd, pixs);
     pixCopyInputFormat(pixd, pixs);
-    scale = 1. / (l_float32) factor;
+    scale = 1.f / (l_float32) factor;
     pixScaleResolution(pixd, scale, scale);
     datad = pixGetData(pixd);
     wpld = pixGetWpl(pixd);
@@ -1735,7 +1737,7 @@ PIX       *pixs, *pixd;
          * If 2.5 =< 1/minscale < 3.5, use isize = 3, etc.
          * Under no conditions use isize < 2  */
     minscale = L_MIN(scalex, scaley);
-    size = 1.0 / minscale;   /* ideal filter full width */
+    size = 1.0f / minscale;   /* ideal filter full width */
     isize = L_MIN(10000, L_MAX(2, (l_int32)(size + 0.5)));
 
     pixGetDimensions(pixs, &ws, &hs, NULL);
@@ -2143,11 +2145,13 @@ l_float32  scalex, scaley;
  *      (1) This function samples from the source without
  *          filtering.  As a result, aliasing will occur for
  *          subsampling (scalex and scaley < 1.0).
- *      (2) By default, sampling for source pixels is shifted by 1/2 pixel.
- *          This is equivalent to shifting the output scaled image by
- *          0.5 times the scaling factor to the right and down.  To avoid
- *          this shift, call pixScalebyBinaryWithShift() using 0 for
- *          both shifts.
+ *      (2) By default, indexing for the sampled source pixel is done
+ *          by rounding.  This shifts the source pixel sampling down
+ *          and to the right by half a pixel, which has the effect of
+ *          shifting the destination image up and to the left by a
+ *          number of pixels approximately equal to half the scaling
+ *          factor.  To avoid this shift in the destination image,
+ *          call pixScalebySamplingWithShift() using 0 for both shifts.
  * </pre>
  */
 PIX *
@@ -2265,8 +2269,8 @@ l_float32  scx, scy;
          * dest coords to get the corresponding src coords.
          * We need them because we iterate over dest pixels
          * and must find the corresponding set of src pixels. */
-    scx = 16. * (l_float32)ws / (l_float32)wd;
-    scy = 16. * (l_float32)hs / (l_float32)hd;
+    scx = 16.f * (l_float32)ws / (l_float32)wd;
+    scy = 16.f * (l_float32)hs / (l_float32)hd;
     wm2 = ws - 2;
     hm2 = hs - 2;
 
@@ -2369,8 +2373,8 @@ l_float32  scx, scy;
          * dest coords to get the corresponding src coords.
          * We need them because we iterate over dest pixels
          * and must find the corresponding set of src pixels. */
-    scx = 16. * (l_float32)ws / (l_float32)wd;
-    scy = 16. * (l_float32)hs / (l_float32)hd;
+    scx = 16.f * (l_float32)ws / (l_float32)wd;
+    scy = 16.f * (l_float32)hs / (l_float32)hd;
     wm2 = ws - 2;
     hm2 = hs - 2;
 
@@ -3254,7 +3258,7 @@ l_float32  wratio, hratio, norm;
         return ERROR_INT("scol not made", __func__, 1);
     }
 
-    norm = 1. / (l_float32)(size * size);
+    norm = 1.f / (l_float32)(size * size);
     wratio = (l_float32)ws / (l_float32)wd;
     hratio = (l_float32)hs / (l_float32)hd;
     for (i = 0; i < hd; i++)
@@ -3416,8 +3420,8 @@ l_float32  scx, scy;
          * dest coords to get the corresponding src coords.
          * We need them because we iterate over dest pixels
          * and must find the corresponding set of src pixels. */
-    scx = 16. * (l_float32)ws / (l_float32)wd;
-    scy = 16. * (l_float32)hs / (l_float32)hd;
+    scx = 16.f * (l_float32)ws / (l_float32)wd;
+    scy = 16.f * (l_float32)hs / (l_float32)hd;
     wm2 = ws - 2;
     hm2 = hs - 2;
 
@@ -3572,8 +3576,8 @@ l_float32  scx, scy;
          * dest coords to get the corresponding src coords.
          * We need them because we iterate over dest pixels
          * and must find the corresponding set of src pixels. */
-    scx = 16. * (l_float32)ws / (l_float32)wd;
-    scy = 16. * (l_float32)hs / (l_float32)hd;
+    scx = 16.f * (l_float32)ws / (l_float32)wd;
+    scy = 16.f * (l_float32)hs / (l_float32)hd;
     wm2 = ws - 2;
     hm2 = hs - 2;
 
